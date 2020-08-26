@@ -8,9 +8,9 @@ _out Starting login process
 if [ -e "${cur_dir}/ibm_api_key.txt" -a "x${IBMCLOUD_API_KEY}" == "x" ]
 then
   _out "using api key"
-  ibmcloud login --apikey @${cur_dir}/ibm_api_key.txt
+  ibmcloud login --apikey @${cur_dir}/ibm_api_key.txt -r eu-gb
 else  
-  ibmcloud login
+  ibmcloud login -r eu-gb
 fi
 if [ $? -ne 0 ]
 then
@@ -37,5 +37,14 @@ then
   ibmcloud resource groups
   exit 1
 fi
+
+_out Checking you are using the latest CLI
+ibmcloud update
+_out Checking you have the minimum set of plugins installed
+check_plugins_are_installed
+_out Ensure the plugins are the latest
+update_plugins
+
 _out "Your current settings are:"
+ibmcloud config --list
 ibmcloud target
