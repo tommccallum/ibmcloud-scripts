@@ -2,8 +2,8 @@
 
 cur_dir=$( cd $(dirname $0) && pwd )
 
-source ${cur_dir}/functions.sh
-
+source ${cur_dir}/ibm_std_functions.sh
+standard_start
 
 KEY_NAME="my_login_api_key"
 KEY_DESC="key for logging into the ibm cloud cli"

@@ -3,4 +3,4 @@ build/
 ibm_api_key.txt
 *.key
 .env
-
+*.log

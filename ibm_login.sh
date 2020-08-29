@@ -2,7 +2,8 @@
 
 cur_dir=$( cd $(dirname $0) && pwd )
 
-source ${cur_dir}/functions.sh
+source ${cur_dir}/ibm_std_functions.sh
+standard_start
 
 _out Starting login process
 if [ -e "${cur_dir}/ibm_api_key.txt" -a "x${IBMCLOUD_API_KEY}" == "x" ]
@@ -46,5 +47,5 @@ _out Ensure the plugins are the latest
 update_plugins
 
 _out "Your current settings are:"
-ibmcloud config --list
-ibmcloud target
+show ibmcloud config --list 
+show ibmcloud target
