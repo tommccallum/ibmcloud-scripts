@@ -17,13 +17,28 @@ then
 fi
 
 [[ $(which dnf 2>/dev/null) ]] && PACMAN="dnf" 
-[[ $(which apt 2>/dev/null) ]] && PACMAN="apt"
+[[ $(which apt-get 2>/dev/null) ]] && PACMAN="apt-get"
 
 if [ "x$PACMAN" == "x" ]
 then
-    echo "Failed to find 'dnf' or 'apt'. Do a manual install."
+    echo "Failed to find 'dnf' or 'apt-get'. Do a manual install."
     exit 1
 fi
 
-[[ ${IS_UBUNTU} ]] && sudo $PACMAN -y install ${UBUNTU[*]}
-[[ ${IS_FEDORA} ]] && sudo $PACMAN -y install ${FEDORA[*]}
+if [[ ${IS_UBUNTU} ]]; then
+    echo "Installing Ubuntu dependencies"
+    sudo apt-get -y update
+    sudo $PACMAN -y install ${UBUNTU[*]}
+    if [ $? -ne 0 ]; then
+        echo "Failed to install all Ubuntu dependencies"
+        exit 1
+    fi
+fi
+if [[ ${IS_FEDORA} ]]; then
+    echo "Installing Fedora dependencies"
+    sudo $PACMAN -y install ${FEDORA[*]}
+    if [ $? -ne 0 ]; then
+        echo "Failed to install all Fedora dependencies"
+        exit 1
+    fi
+fi
