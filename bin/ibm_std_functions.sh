@@ -836,7 +836,7 @@ function create_function_namespace() {
   check_if_function_namespace_exist $name
   if [ $? -eq 1 ]; then
     _err "create_function_namespace: Function namespace ${name} already exists."
-    return 1
+    return 2
   fi
   _out Creating namespace for ${name}
   ibmcloud fn namespace create ${name} --description "$description"
