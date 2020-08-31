@@ -51,7 +51,8 @@ function find_environment() {
   [[ "x$env_file" == "x" && -e "~/${exp_env_file}" ]] && env_file="~/${exp_env_file}"
   if [ "x${env_file}" != "x" ]; then
     env_file=$(get_absolute_path ${env_file})
-    echo "${env_file}"
+    RETVAL="${env_file}"
+    return 0
   else
     _fatal "Could not find ${exp_env_file}."
   fi
@@ -146,7 +147,8 @@ function standard_project_script_start() {
   local root_folder=$(get_root_folder)
   LOG_FILE="${root_folder}/${log_filename}"
   setup_logging ${LOG_FILE}
-  ENV_FILE=$(find_environment)
+  find_environment
+  ENV_FILE=${RETVAL}
   _out "Loading variables from $(abbreviate_file_path ${ENV_FILE})"
   source ${ENV_FILE}
   load_project_functions
