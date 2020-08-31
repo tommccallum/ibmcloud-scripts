@@ -11,7 +11,11 @@ then
   _out "using api key"
   ibmcloud login --apikey @${cur_dir}/ibm_api_key.txt -r eu-gb
 else  
-  ibmcloud login -r eu-gb
+  if [ "x${IBMCLOUD_API_KEY}" == "x" ]; then
+    ibmcloud login -r eu-gb
+  else
+    ibmcloud login -r eu-gb -apikey ${IBMCLOUD_API_KEY}
+  fi
 fi
 if [ $? -ne 0 ]
 then
