@@ -15,8 +15,8 @@ else
     _out "Logging in expecting user intervention"
     ibmcloud login -r eu-gb
   else
-    _out "Logging in using IBMCLOUD_API_KEY"
-    ibmcloud login -r eu-gb -apikey "${IBMCLOUD_API_KEY}"
+    _out "Logging in using environment variable"
+    ibmcloud login -r eu-gb --apikey "${IBMCLOUD_API_KEY}"
   fi
 fi
 if [ $? -ne 0 ]
