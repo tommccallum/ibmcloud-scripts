@@ -22,12 +22,12 @@ fedora$ sudo dnf -y install git
 git clone https://github.com/tommccallum/ibmcloud-scripts
 cd ibmcloud-scripts
 ./install.sh
-export PATH=$PATH:$(pwd)
+export PATH=$PATH:$(pwd)/bin
 ```
 
 You will want to add the following to your .bashrc or .bash_profile file:
 ```
-export PATH=$PATH:<location of ibmcloud-scripts>
+export PATH=$PATH:<location of ibmcloud-scripts>/bin
 ```
 
 We recommend you create an api key for yourself to save you some typing!  Keep this safe though.

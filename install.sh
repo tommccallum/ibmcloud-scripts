@@ -2,8 +2,8 @@
 
 # Installs any terminal requirements
 # expect-devel has the unbuffer script which is useful for keeping the IBM Cloud terminal colours
-UBUNTU=( "expect-dev" )
-FEDORA=( "expect-devel" )
+UBUNTU=( "python3 expect-dev" )
+FEDORA=( "python3 expect-devel" )
 
 DISTRO=$(awk -F= '/^NAME/{print $2}' /etc/os-release)
 PACMAN=""

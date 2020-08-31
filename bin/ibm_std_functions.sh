@@ -473,8 +473,8 @@ function create_app_id_credentials() {
     _fatal "create_app_id_credentials: missing name of App Id service"
   fi
   _out Creating App ID credentials
-  ibmcloud resource service-key-create ${app_id_name}-credentials Reader --instance-name ${app_id_name}
-  ibmcloud resource service-key ${app_id_name}-credentials
+  ibmcloud resource service-key-create ${app_id_name}_credentials Reader --instance-name ${app_id_name}
+  ibmcloud resource service-key ${app_id_name}_credentials
 }
 
 # TODO may be better for these get functions to return blank, and rely on caller to check a valid
@@ -673,6 +673,22 @@ function create_object_storage_instance() {
   _out Creating Object Storage service instance: ${name}
   ibmcloud resource service-instance-create ${name} cloud-object-storage lite global
   wait_for_service_to_become_active ${name}
+  return 0
+}
+
+function create_object_storage_credentials() {
+  local name="$1"
+  if [ "x$name" == "x" ]; then
+    _fatal "create_object_storage_credentials: name required"
+  fi
+  check_if_object_storage_exists "${name}"
+  if [ $? -ne 1 ]; then
+    _fatal "Object storage ${name} does not exist yet."
+  fi
+  ibmcloud resource service-key-create ${name}_credentials Manager --instance-name ${name}
+  if [ $? -ne 0 ]; then
+    _fatal "create_object_storage_credentials: Could not create object storage credentials service '${name}_credentials'"
+  fi
   return 0
 }
 
