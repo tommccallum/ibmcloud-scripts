@@ -54,7 +54,8 @@ function find_environment() {
     RETVAL="${env_file}"
     return 0
   else
-    _fatal "Could not find ${exp_env_file}."
+    _err "Could not find ${exp_env_file}."
+    return 1
   fi
 }
 
@@ -410,7 +411,7 @@ function bump_version() {
 
 function run() {
   CMD="$*"
-  SHORT=$(abbreviate_file_path $CMD)
+  SHORT=$(abbreviate_file_path "$CMD")
   $*
   if [ $? -ne 0 ]; then
     if [ "x$LOG_FILE" == "x" ]; then
