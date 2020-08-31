@@ -29,9 +29,19 @@ then
   exit 1
 fi
 
+_out "Retrieving resource group"
 RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+if [ "x${RESOURCE_GROUP}" == "x" ]; then
+  # try again
+  _out "Resource group was empty, attempt 2..."
+  sleep 5
+  RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+  if [ "x${RESOURCE_GROUP}" == "x" ]; then
+    _fatal "Failed to find resource group, try again as this can "
+  fi
+fi
 _out "Setting resource group to ${RESOURCE_GROUP}"
-ibmcloud target -g $RESOURCE_GROUP
+ibmcloud target -g "$RESOURCE_GROUP"
 if [ $? -ne 0 ]
 then
   _err "Failed to set resource group"

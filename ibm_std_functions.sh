@@ -178,10 +178,37 @@ function remove_var_from_env() {
 }
 
 function set_var_in_env() {
-  if [ "x${cur_dir}" == "x" ]; then
-    _fatal "cur_dir variable cannot be empty"
+  local key="$1"
+  local val="$2"
+  if [ "x$key" == "x" ]; then
+    _fatal "Key is missing"
   fi
-  echo "$1=$2" >>${cur_dir}/.env
+  if [ "x$ENV_FILE" == "x" ]; then
+    _fatal "No environment file set"
+  fi
+  if [ "x$val" == "x" ]; then
+    ## remove value from file
+    sed -i "/^$key=/d" ${ENV_FILE}
+    local exists=$(grep "^$key=" ${ENV_FILE})
+    if [ "x$exists" == "x" ]; then
+      _ok "$key removed from $(abbreviate_file_path ${ENV_FILE})"
+      return 0
+    else
+      _fatal "Failed to remove '$key' from $(abbreviate_file_path ${ENV_FILE})"
+    fi
+  fi
+  local exists=$(grep "^$key=" ${ENV_FILE})
+  if [ "x$exists" == "x" ]; then
+    printf "\n$key=\"$val\"" >> ${ENV_FILE}
+  else  
+    sed -i "s#^$key=.*#$key=\"$val\"#" ${ENV_FILE}
+  fi
+  local exists=$(grep "^$key=\"$val\"" ${ENV_FILE})
+  if [ "x$exists" != "x" ]; then
+    _ok "$key was added to $(abbreviate_file_path ${ENV_FILE})"
+  else
+    _fatal "Failed to add '$key' to $(abbreviate_file_path ${ENV_FILE})"
+  fi
 }
 
 function check_tools() {
@@ -320,6 +347,9 @@ function search_for_ibmcloud_org_and_space() {
 
 function ibmcloud_project_login() {
   local project_name="$1"
+  if [ "x${project_name}" == "x" ]; then
+    _fatal "ibmcloud_project_login: No project name given."
+  fi
   local api_key=$(get_project_api_key ${project_name} || echo )
   if [ "x$api_key" == "x" ]; then
     return 1
@@ -348,7 +378,17 @@ function ibmcloud_project_login() {
     _fatal Failed to set target using org ${IBMCLOUD_ORG} and space ${IBMCLOUD_SPACE}
   fi
 
-  readonly RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+  _out "Retrieving resource group"
+  RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+  if [ "x${RESOURCE_GROUP}" == "x" ]; then
+    # try again
+    _out "Resource group was empty, attempt 2..."
+    sleep 5
+    RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+    if [ "x${RESOURCE_GROUP}" == "x" ]; then
+      _fatal "Failed to find resource group, try again as this can "
+    fi
+  fi
   _out "Setting resource group to ${RESOURCE_GROUP}"
   ibmcloud target -g $RESOURCE_GROUP
   if [ $? -ne 0 ]; then
@@ -437,9 +477,11 @@ function create_app_id_credentials() {
   ibmcloud resource service-key ${app_id_name}-credentials
 }
 
+# TODO may be better for these get functions to return blank, and rely on caller to check a valid
+# value exists
 function app_id_get_management_url() {
   local app_id_name="$1"
-  if [ "x$app_id_name" == "x"]; then
+  if [ "x$app_id_name" == "x" ]; then
     _fatal "app_id_get_management_url: missing name of App Id service"
   fi
   local val=$(ibmcloud resource service-key ${app_id_name}-credentials | awk '/managementUrl/{ print $2 }')
@@ -516,11 +558,25 @@ function app_id_add_user() {
     _err "app_id_add_user: missing name of App Id service"
     return 1
   fi
-  local user_email="$1"
-  local user_pwd="$2"
-  local appid_mgmturl=$(app_id_get_management_url ${app_id_name})
+  local user_email="$2"
+  if [ "x$user_email" == "x" ]; then
+    _err "app_id_add_user: missing user_email"
+    return 1
+  fi
+  local user_pwd="$3"
+  if [ "x$user_pwd" == "x" ]; then
+    _err "app_id_add_user: missing user password"
+    return 1
+  fi
   _out Creating cloud directory test user: $user_email, $user_pwd
-  IBMCLOUD_BEARER_TOKEN=$(ibmcloud iam oauth-tokens | awk '/IAM/{ print $3" "$4 }')
+
+  local appid_mgmturl=$(app_id_get_management_url ${app_id_name})
+  local IBMCLOUD_BEARER_TOKEN=$(ibmcloud iam oauth-tokens | awk '/IAM/{ print $3" "$4 }')
+  if [ "x${IBMCLOUD_BEARER_TOKEN}" == "x" ]; then
+    _err "app_id_add_user: Failed to get Bearer Token from iam service (exec: ibmcloud iam oauth-tokens)"
+    ibmcloud iam oauth-tokens
+    _fatal
+  fi
   curl -s -X POST \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' \
@@ -532,6 +588,11 @@ function app_id_add_user() {
          "password": "'$user_pwd'"
         }' \
     "${appid_mgmturl}/cloud_directory/Users"
+  if [ $? -ne 0 ]; then
+    _fatal "app_id_add_user: Failed to add user '${user_email}' to APP ID" 
+  else 
+    _ok "User '${user_email}' was added to APP ID"
+  fi
 }
 
 # The IBM url that is the base of their functions api
@@ -630,7 +691,7 @@ function get_object_storage_id() {
 }
 
 function get_oauth_token() {
-  echo "$(ibmcloud iam oauth-tokens | awk '/IAM/{ print $4 }')"
+  echo "$(ibmcloud iam oauth-tokens | awk '/IAM/{ print $3" "$4 }')"
 }
 
 function check_if_bucket_exists() {
@@ -727,5 +788,278 @@ function get_service_username() {
   fi
   local username=$(ibmcloud resource service-key ${name}_credentials | awk '/username/{print $2}')
   echo "${username}"
+}
+
+function check_if_function_namespace_exist() {
+  local name="$1"
+  if [ "x$name" == "x" ]; then
+    _fatal "check_if_function_namespace_exist: name required"
+  fi
+  local ns_exists=$( ibmcloud fn namespace list | grep "^$name" )
+  if [ "x$ns_exists" == "x" ]; then
+    return 0
+  fi
+  return 1
+}
+
+function create_function_namespace() {
+  local name="$1"
+  local description="$2"
+  if [ "x$name" == "x" ]; then
+    _fatal "create_function_namespace: name required"
+  fi
+  check_if_function_namespace_exist $name
+  if [ $? -eq 1 ]; then
+    _err "create_function_namespace: Function namespace ${name} already exists."
+    return 1
+  fi
+  _out Creating namespace for ${name}
+  ibmcloud fn namespace create ${name} --description "$description"
+  if [ $? -ne 0 ]; then
+    _fatal "create_function_namespace: Failed to create new namespace named '${name}'"
+  fi
+  return 0
+}
+
+function set_default_function_namespace() {
+  local name="$1"
+  if [ "x$name" == "x" ]; then
+    _fatal "create_function_namespace: name required"
+  fi
+  check_if_function_namespace_exist $name
+  if [ $? -eq 0 ]; then
+    _fatal "set_default_function_namespace: Function namespace ${name} does not exist."
+  fi
+  ibmcloud fn property set --namespace ${name}
+  if [ $? -ne 0 ]; then
+    _fatal "set_default_function_namespace: Failed to set default namespace to '${name}', check it exists."
+  fi
+  return 0
+}
+
+function check_if_default_function_namespace_is_set() {
+  local name="$1"
+  local ns=$(ibmcloud fn property get --namespace | grep "^$name")
+  if [ "x$ns" == "x" ]; then
+    return 0
+  fi
+  return 1
+}
+
+# Only works if namespace has been set
+function check_if_package_exists() {
+  local name="$1"
+  if [ "x$name" == "x" ]; then
+    _fatal "check_if_package_exists: name required"
+  fi
+  FOUND=$(ibmcloud fn package list | grep "/${name} ")
+  if [ "x$FOUND" == "x" ]; then
+    return 0
+  fi
+  return 1
+}
+
+function create_function_package() {
+  local name="$1"
+  if [ "x$name" == "x" ]; then
+    _fatal "create_function_package: name required"
+  fi
+  check_if_package_exists ${name}
+  if [ $? == 1 ]; then
+    _out "Package ${name} already exists."
+    return 2
+  fi
+  ibmcloud wsk package create ${name}
+  if [ $? -ne 0 ]; then
+    _fatal "create_function_package: Failed to create new package '${name}'."
+  fi
+  return 0
+}
+
+function check_if_function_action_exists() {
+  local action_name="$1"
+  if [ "x$action_name" == "x" ]; then
+    _fatal "check_if_function_action_exists: name required"
+  fi
+  FOUND=$( ibmcloud fn action list | grep "/${action_name}" )
+  if [ "x${FOUND}" == "x" ]; then
+    return 1
+  fi
+  return 0
+}
+
+#
+# If you need to pass -p arguments to 'create action' then
+# you need to use this structure in your code:
+#
+# action_name="${FN_GENERIC_PACKAGE}/login"
+# action_js="${root_folder}/../../function-login/login.js"
+# pre_check_for_function_action "$action_name" "$action_js" "${NODE_VERSION}"
+# if [ $? -eq 0 ]; then
+#     ibmcloud wsk action create "$action_name" "$action_js" --kind "${NODE_VERSION}" -p config "${CONFIG}"
+#     if [ $? -ne 0 ]; then
+#         _fatal "create_function_action: Could not create function action '${action_name}'"
+#     fi
+# fi
+#
+function pre_check_for_function_action() {
+  local action_name="$1"
+  local action_js="$2"
+  local node_version="$3"
+  if [ "x$action_name" == "x" ]; then
+    _fatal "pre_check_for_function_action: name required"
+  fi
+  if [ ! -e "$action_js" ]; then
+    _fatal "pre_check_for_function_action: Could not find '${action_js}', file is missing."
+  fi
+  if [ "x$node_version" == "x" ]; then
+    _fatal "pre_check_for_function_action: --kind argument value is empty"
+  fi
+  check_if_function_action_exists ${action_name}
+  if [ $? -eq 0 ]; then
+    _out Function action ${action_name} already exists.
+    return 2
+  fi
+  _out Creating action ${action_name}
+}
+
+# This function is hard and I am not sure it will actually be much use.
+# Basically the create action takes a set of arguments that we can either
+# pass as an array or as a string.  As a string we can use eval to expand
+# the string into separate arguments, but this is a big security hole.
+function create_function_action() {
+  local action_name="$1"
+  local action_js="$2"
+  local node_version="$3"
+  if [ "x$action_name" == "x" ]; then
+    _fatal "create_function_action: name required"
+  fi
+  if [ ! -e "$action_js" ]; then
+    _fatal "create_function_action: Could not find '${action_js}', file is missing."
+  fi
+  if [ "x$node_version" == "x" ]; then
+    node_version="nodejs:10"
+  fi
+  check_if_function_action_exists ${action_name}
+  if [ $? -eq 0 ]; then
+    _out Function action ${action_name} already exists.
+    return 2
+  fi
+  _out Creating action ${action_name}
+  ibmcloud wsk action create "$action_name" "$action_js" --kind "${node_version}"
+  if [ $? -ne 0 ]; then
+    _fatal "create_function_action: Could not create function action '${action_name}'"
+  fi
+  return 0
+}
+
+# function update_function_action() {
+#   local action_name="$1"
+#   local action_js="$2"
+#   local node_version="$3"
+#   local args="$4"
+#   local action_name="$1"
+#   if [ "x$action_name" == "x" ]; then
+#     _fatal "update_function_action: name required"
+#   fi
+#   if [ ! -e "$action_js" ]; then
+#     _fatal "update_function_action: Could not find '${action_js}', file is missing."
+#   fi
+#   if [ "x$node_version" == "x"]; then
+#     node_version="nodejs:10"
+#   fi
+#   ibmcloud wsk action update "${action_name}" "$action_js" --kind ${node_version} ${args}
+#   if [ $? -ne 0 ]; then
+#     _fatal "update_function_action: Could not update function action '${action_name}'"
+#     return 1
+#   fi
+#   return 0 
+# }
+
+function pre_check_for_function_sequence() {
+  local action_name="$1"
+  local sequence="$2"
+  if [ "x$action_name" == "x" ]; then
+    _fatal "pre_check_for_function_sequence: name required"
+  fi
+  if [ "x$sequence" == "x" ]; then
+    _fatal "pre_check_for_function_sequence: comma separated action sequence required"
+  fi
+  check_if_function_action_exists ${action_name}
+  if [ $? -eq 0 ]; then
+    _out Function action sequence ${action_name} already exists.
+    return 2
+  fi
+}
+
+# Can only be used when creating without any -p values, may be useless.
+function create_function_sequence() {
+  local action_name="$1"
+  local sequence="$2"
+  if [ "x$action_name" == "x" ]; then
+    _fatal "create_function_sequence: name required"
+  fi
+  if [ "x$sequence" == "x" ]; then
+    _fatal "create_function_sequence: comma separated action sequence required"
+  fi
+  check_if_function_action_exists ${action_name}
+  if [ $? -eq 0 ]; then
+    _out Function action sequence ${action_name} already exists.
+    return 2
+  fi
+  ibmcloud wsk action update --sequence "${action_name}" "${sequence}"
+  if [ $? -ne 0 ]; then
+    _fatal "create_function_sequence: Could not create function sequence '${action_name}'"
+    return 1
+  fi
+  return 0 
+}
+
+function create_api() {
+return 0
+}
+
+function register_redirect_uri_with_app_id() {
+return 0
+}
+
+function make_operation_from_name() {
+  local name="$1"
+  if [ "x$name" == "x" ]; then
+    _fatal "make_operation_from_name: name required"
+  fi
+  local operation="$(tr '[:lower:]' '[:upper:]' <<< ${name:0:1})${name:1}"
+  echo "get${operation}"
+}
+
+function upload_directory_to_storage_bucket() {
+  local BUCKET_URL="$1"
+  local DIRECTORY="$2"
+  if [ "x$BUCKET_URL" == "x" ]; then
+    _fatal "upload_directory_to_storage_bucket: bucket_url is empty string"
+  fi
+  # TODO For some reason we just need the 4th not 3,4 as we needed before - check why
+  #IAM_TOKEN=$(get_oauth_token)
+  IAM_TOKEN=$(ibmcloud iam oauth-tokens | awk '/IAM/{ print $4 }')
+  if [ "x${IAM_TOKEN}" == "x" ]; then
+    _fatal "Failed to get new oauth token, are you logged in?"
+  fi
+
+  _out Uploading files to bucket 
+  for local_file in $( find "$DIRECTORY" -maxdepth 1 -type f )
+  do
+    base=$(basename "$local_file")
+    _out "Uploading ${base}"
+    curl -X "PUT" "${BUCKET_URL}/${base}" \
+        -H "x-amz-acl: public-read" \
+        -H "Authorization: Bearer ${IAM_TOKEN}" \
+        -H "Content-Type: text/plain; charset=utf-8" \
+        --upload-file "${local_file}"
+    if [ $? -ne 0 ]; then
+      _fatal "Failed to upload ${local_file} to ${BUCKET_URL}/${base}"
+    else
+      _ok "Successfully uploaded $(abbreviate_file_path ${local_file})"
+    fi
+  done
 }
 
