@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Script to short a file path specified as the first argument
 # in relation to a potentially longer path in the second argument.
