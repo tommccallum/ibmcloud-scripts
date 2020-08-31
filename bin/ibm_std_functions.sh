@@ -88,19 +88,19 @@ function setup_logging() {
 
 function _ok() {
   if [ "x${IBM_STD_FUNCTIONS_REDIRECT_OUTPUT}" == "x" ]; then
-    echo -e "[$(date)] \e[1;32m$@\e[0m" >&3
-    echo -e "[$(date)] $@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+    echo -e "[$(date)] [$(basename $0)] \e[1;32m$@\e[0m" >&3
+    echo -e "[$(date)] [$(basename $0)] $@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
   else
-    echo -e "[$(date)] \e[1;32m$@\e[0m"
+    echo -e "[$(date)] [$(basename $0)] \e[1;32m$@\e[0m"
   fi
 }
 
 function _err() {
   if [ "x${IBM_STD_FUNCTIONS_REDIRECT_OUTPUT}" == "x" ]; then
-    echo -e "[$(date)] \e[1;31m$@\e[0m" >&4
-    echo -e "[$(date)] $@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+    echo -e "[$(date)] [$(basename $0)] \e[1;31m$@\e[0m" >&4
+    echo -e "[$(date)] [$(basename $0)] $@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
   else
-    echo -e "[$(date)] \e[1;32m$@\e[0m"
+    echo -e "[$(date)] [$(basename $0)] \e[1;32m$@\e[0m"
   fi
 }
 
@@ -111,10 +111,10 @@ function _fatal() {
 
 function _out() {
   if [ "x${IBM_STD_FUNCTIONS_REDIRECT_OUTPUT}" == "x" ]; then
-    echo "[$(date)] $@" >&3
-    echo "[$(date)] $@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+    echo "[$(date)] [$(basename $0)] $@" >&3
+    echo "[$(date)] [$(basename $0)] $@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
   else
-    echo -e "[$(date)] \e[1;32m$@\e[0m"
+    echo -e "[$(date)] [$(basename $0)] \e[1;32m$@\e[0m"
   fi
 }
 
