@@ -6,10 +6,10 @@ source ${cur_dir}/ibm_std_functions.sh
 standard_start
 
 _out Starting login process
-if [ -e "${cur_dir}/ibm_api_key.txt" -a "x${IBMCLOUD_API_KEY}" == "x" ]
+if [ -e "${cur_dir}/../ibm_api_key.txt" -a "x${IBMCLOUD_API_KEY}" == "x" ]
 then
   _out "Logging in using api key file"
-  ibmcloud login --apikey @${cur_dir}/ibm_api_key.txt -r eu-gb
+  ibmcloud login --apikey @${cur_dir}/../ibm_api_key.txt -r eu-gb
 else  
   if [ "x${IBMCLOUD_API_KEY}" == "x" ]; then
     _out "Logging in expecting user intervention"
