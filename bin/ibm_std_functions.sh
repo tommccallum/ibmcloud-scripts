@@ -349,56 +349,62 @@ function search_for_ibmcloud_org_and_space() {
 }
 
 function ibmcloud_project_login() {
-  local project_name="$1"
-  if [ "x${project_name}" == "x" ]; then
-    _fatal "ibmcloud_project_login: No project name given."
-  fi
-  local api_key=$(get_project_api_key ${project_name})
-  if [ "x$api_key" == "x" || ! -e "${api_key}" ]; then
-    return 1
-  fi
+  ibm_login.sh
+  # local project_name="$1"
+  # if [ "x${project_name}" == "x" ]; then
+  #   _fatal "ibmcloud_project_login: No project name given."
+  # fi
+  # if [ "x$IBMCLOUD_API_KEY" == "x" ]; then
+  #   local api_key=$(get_project_api_key ${project_name})
+  #   if [ "x$api_key" == "x" || ! -e "${api_key}" ]; then
+  #     return 1
+  #   fi
+  # else
+  #   echo "Using IBMCLOUD_API_KEY for project login"
+  #   api_key=${IBMCLOUD_API_KEY}
+  # fi
 
-  search_for_region
-  search_for_ibmcloud_org_and_space
-  IBMCLOUD_ORG=$(get_current_org)
-  IBMCLOUD_SPACE=$(get_current_space)
+  # search_for_region
+  # search_for_ibmcloud_org_and_space
+  # IBMCLOUD_ORG=$(get_current_org)
+  # IBMCLOUD_SPACE=$(get_current_space)
 
-  # Skip version check updates
-  ibmcloud config --check-version=false
-  local IBMCLOUD_API_ENDPOINT=$(ibmcloud api | awk '/API endpoint/{print $3}')
-  _out IBMCLOUD_API_ENDPOINT=${IBMCLOUD_API_ENDPOINT}
+  # # Skip version check updates
+  # ibmcloud config --check-version=false
+  # local IBMCLOUD_API_ENDPOINT=$(ibmcloud api | awk '/API endpoint/{print $3}')
+  # _out IBMCLOUD_API_ENDPOINT=${IBMCLOUD_API_ENDPOINT}
 
-  # Obtain the API endpoint from BLUEMIX_REGION and set it as default
-  _out Logging in to IBM cloud
-  # Login to ibmcloud, generate .wskprops
-  ibmcloud login --apikey ${api_key} -a ${IBMCLOUD_API_ENDPOINT} -r ${BLUEMIX_REGION}
-  if [ $? -ne 0 ]; then
-    _fatal Failed to login to ibmcloud using api key ${api_key}
-  fi
+  # # Obtain the API endpoint from BLUEMIX_REGION and set it as default
+  # _out Logging in to IBM cloud
+  # # Login to ibmcloud, generate .wskprops
+  # ibmcloud login --apikey ${api_key} -a ${IBMCLOUD_API_ENDPOINT} -r ${BLUEMIX_REGION}
+  # if [ $? -ne 0 ]; then
+  #   _fatal Failed to login to ibmcloud using api key ${api_key}
+  # fi
 
-  ibmcloud target -o "$IBMCLOUD_ORG" -s "$IBMCLOUD_SPACE"
-  if [ $? -ne 0 ]; then
-    _fatal Failed to set target using org ${IBMCLOUD_ORG} and space ${IBMCLOUD_SPACE}
-  fi
+  # ibmcloud target -o "$IBMCLOUD_ORG" -s "$IBMCLOUD_SPACE"
+  # if [ $? -ne 0 ]; then
+  #   _fatal Failed to set target using org ${IBMCLOUD_ORG} and space ${IBMCLOUD_SPACE}
+  # fi
 
-  _out "Retrieving resource group"
-  RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
-  if [ "x${RESOURCE_GROUP}" == "x" ]; then
-    # try again
-    _out "Resource group was empty, attempt 2..."
-    sleep 5
-    RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
-    if [ "x${RESOURCE_GROUP}" == "x" ]; then
-      _fatal "Failed to find resource group, try again as this can "
-    fi
-  fi
-  _out "Setting resource group to ${RESOURCE_GROUP}"
-  ibmcloud target -g $RESOURCE_GROUP
-  if [ $? -ne 0 ]; then
-    _err "Failed to set resource group"
-    ibmcloud resource groups
-    _fatal
-  fi
+  # _out "Retrieving resource group"
+  # RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+  # if [ "x${RESOURCE_GROUP}" == "x" ]; then
+  #   # try again
+  #   _out "Resource group was empty, attempt 2..."
+  #   sleep 5
+  #   RESOURCE_GROUP=$(ibmcloud resource groups | grep -i " active " | head -n 1 | awk '{print $1}')
+  #   if [ "x${RESOURCE_GROUP}" == "x" ]; then
+  #     _fatal "Failed to find resource group, try again as this can "
+  #   fi
+  # fi
+  # _out "Setting resource group to ${RESOURCE_GROUP}"
+  # ibmcloud target -g $RESOURCE_GROUP
+  # if [ $? -ne 0 ]; then
+  #   _err "Failed to set resource group"
+  #   ibmcloud resource groups
+  #   _fatal
+  # fi
 }
 
 function bump_version() {
