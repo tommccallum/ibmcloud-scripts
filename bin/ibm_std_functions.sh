@@ -350,8 +350,8 @@ function ibmcloud_project_login() {
   if [ "x${project_name}" == "x" ]; then
     _fatal "ibmcloud_project_login: No project name given."
   fi
-  local api_key=$(get_project_api_key ${project_name} || echo )
-  if [ "x$api_key" == "x" ]; then
+  local api_key=$(get_project_api_key ${project_name})
+  if [ "x$api_key" == "x" || ! -e "${api_key}" ]; then
     return 1
   fi
 
@@ -625,7 +625,7 @@ function get_project_api_key() {
   if [ ! -e "${api_key_file}" ]; then
     api_key_file=$( find "${root_folder}/../.." -type f -iname "${project_name}.json" )
     if [ "x${api_key_file}" == "x" ]; then
-      _fatal "get_project_api_key: could not find ${api_key_file}"
+      _fatal "get_project_api_key: could not find ${project_name}.json"
     fi
   fi
   local api_key=$(grep "\"apikey" ${api_key_file} | awk '{print $2}' | sed "s/[\",]//g")
