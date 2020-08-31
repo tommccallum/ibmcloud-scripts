@@ -79,7 +79,6 @@ function setup_logging() {
     exec 4>&2 # Set 4 to be a copy of stderr
     exec 1>$log_file 2>&1
     LOG_FILE="$log_file"
-    _out "debug: ${LOG_FILE}"
     _out "Logging to $(abbreviate_file_path ${LOG_FILE})"
   else
     IBM_STD_FUNCTIONS_REDIRECT_OUTPUT="FALSE"
@@ -148,7 +147,6 @@ function standard_project_script_start() {
   LOG_FILE="${root_folder}/${log_filename}"
   setup_logging ${LOG_FILE}
   ENV_FILE=$(find_environment)
-  _out "debug: ${ENV_FILE}"
   _out "Loading variables from $(abbreviate_file_path ${ENV_FILE})"
   source ${ENV_FILE}
   load_project_functions
