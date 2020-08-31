@@ -353,6 +353,7 @@ function ibmcloud_project_login() {
   if [ "x$is_logged_in" != "x" ]; then
     ibm_login.sh
   else 
+    ibmcloud target >&3
     _out "Already logged in, using existing account"
   fi
   # local project_name="$1"
