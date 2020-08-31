@@ -349,7 +349,12 @@ function search_for_ibmcloud_org_and_space() {
 }
 
 function ibmcloud_project_login() {
-  ibm_login.sh
+  local is_logged_in=$(ibmcloud target | grep -i "not logged in")
+  if [ "x$is_logged_in" != "x" ]; then
+    ibm_login.sh
+  else 
+    _out "Already logged in, using existing account"
+  fi
   # local project_name="$1"
   # if [ "x${project_name}" == "x" ]; then
   #   _fatal "ibmcloud_project_login: No project name given."
