@@ -493,7 +493,7 @@ function app_id_get_management_url() {
   if [ "x$app_id_name" == "x" ]; then
     _fatal "app_id_get_management_url: missing name of App Id service"
   fi
-  local val=$(ibmcloud resource service-key ${app_id_name}-credentials | awk '/managementUrl/{ print $2 }')
+  local val=$(ibmcloud resource service-key ${app_id_name}_credentials | awk '/managementUrl/{ print $2 }')
   if [ "x$val" == "x" ]; then
     _err "app_id_get_management_url: failed to find value"
     ibmcloud resource service-key ${app_id_name}-credentials
@@ -507,7 +507,7 @@ function app_id_get_tenant_id() {
   if [ "x$app_id_name" == "x" ]; then
     _fatal "app_id_get_tenant_id: missing name of App Id service"
   fi
-  local val=$(ibmcloud resource service-key ${app_id_name}-credentials | awk '/tenantId/{ print $2 }')
+  local val=$(ibmcloud resource service-key ${app_id_name}_credentials | awk '/tenantId/{ print $2 }')
   if [ "x$val" == "x" ]; then
     _err "app_id_get_management_url: failed to find value"
     ibmcloud resource service-key ${app_id_name}-credentials
@@ -522,7 +522,7 @@ function app_id_get_oauth_server_url() {
     _err "app_id_get_oauth_server_url: missing name of App Id service"
     return 1
   fi
-  local val=$(ibmcloud resource service-key ${app_id_name}-credentials | awk '/oauthServerUrl/{ print $2 }')
+  local val=$(ibmcloud resource service-key ${app_id_name}_credentials | awk '/oauthServerUrl/{ print $2 }')
   if [ "x$val" == "x" ]; then
     _err "app_id_get_management_url: failed to find value"
     ibmcloud resource service-key ${app_id_name}-credentials
@@ -537,7 +537,7 @@ function app_id_get_client_id() {
     _err "app_id_get_client_id: missing name of App Id service"
     return 1
   fi
-  local val=$(ibmcloud resource service-key ${app_id_name}-credentials | awk '/clientId/{ print $2 }')
+  local val=$(ibmcloud resource service-key ${app_id_name}_credentials | awk '/clientId/{ print $2 }')
   if [ "x$val" == "x" ]; then
     _err "app_id_get_management_url: failed to find value"
     ibmcloud resource service-key ${app_id_name}-credentials
@@ -552,7 +552,7 @@ function app_id_get_secret() {
     _err "app_id_get_secret: missing name of App Id service"
     return 1
   fi
-  local val=$(ibmcloud resource service-key ${app_id_name}-credentials | awk '/secret/{ print $2 }')
+  local val=$(ibmcloud resource service-key ${app_id_name}_credentials | awk '/secret/{ print $2 }')
   if [ "x$val" == "x" ]; then
     _err "app_id_get_management_url: failed to find value"
     ibmcloud resource service-key ${app_id_name}-credentials
