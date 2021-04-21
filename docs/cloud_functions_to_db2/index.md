@@ -121,17 +121,38 @@ Example output:
 ```
 Invoking 'cf services'...
 
-Getting services in org IBM2126278 / space devuk as mo04tm@uhi.ac.uk...
+Getting services in org IBM2126278 / space devuk as someone@example.ac.uk...
 
 name                            service                   plan   bound apps      last operation     broker                   upgrade available
 AppID-ca                        AppID                     lite   MARIE           update succeeded   IMFAuthorizationBroker   
 Cloudant-aw-gj-65749            cloudantNoSQLDB           lite   webapp-aw-gj    create succeeded   cloudant                 
 Cloudant-q1                     cloudantNoSQLDB           lite   MARIE           create succeeded   cloudant                 
 Cloudant-same-app-4-ways-5173   cloudantNoSQLDB           lite   sameapp4ways    create succeeded   cloudant                 
-db2-e-commerce-2021             dashDB For Transactions   Lite   ecommerce-app   create succeeded   dashDBRM 
+db2-example             dashDB For Transactions   Lite   ecommerce-app   create succeeded   dashDBRM 
 ```
 
 Note the second column is the *service* name used in the functions calls for binding.
+
+## To list the service keys
+
+```
+ibmcloud service keys SERVICE_NAME
+```
+
+Example:
+```
+ibmcloud service keys db2-example
+```
+
+Example output:
+```
+Invoking 'cf service-keys db2-example'...
+
+Getting keys for service instance db2-example as someone@example.ac.uk...
+
+name
+db2-ecommerce-cf-service-key
+```
 
 ## To list the available namespaces
 
@@ -169,6 +190,11 @@ ok: whisk namespace set to Namespace-d2C
 * Ensure you are using the correct resource group
 * Ensure you are logged in (sometimes the CLI times out without saying anything so watch out for that)
 
+```
+ibmcloud fn service bind SERVICE ACTION_NAME [--instance INSTANCE_NAME] [--keyname CREDENTIALS_NAME]
+```
+
+Example:
 ```
 ibmcloud fn service bind "dashDB For Transactions" test/testdb2creds --instance my-db2 --keyname "cf-db2-service-credential" 
 ```
@@ -216,6 +242,11 @@ This should print out the parameters passed by default when the action is called
 * To unbind the service from the action then you do this:
 
 ```
+ibmcloud fn service unbind SERVICE_NAME ACTION_NAME
+```
+
+Example:
+```
 ibmcloud fn service unbind "dashDB For Transactions" test/testdb2creds 
 ```
 
@@ -242,3 +273,7 @@ If you change the action code you will need to bind and rebind the action otherw
     }
 }
 ```
+
+## References
+
+* [https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-services](https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-services)
