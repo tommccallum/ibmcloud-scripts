@@ -15,7 +15,7 @@ ibmcloud target --cf
 Set your resource group, for an individual account this is normally *Default*.  For the UHI account this will **NOT** be *Default* but will have been given to you by the delivery staff specifically for your project.
 
 ```
-ibmcloud target -r Default
+ibmcloud target -g Default
 ```
 
 ## For help
