@@ -19,7 +19,7 @@ ibmcloud login
 If using UHI account then target the appropriate resource group.  If using Lite account target 'Default'. If this does not work then you should go to Manage|Account and Resource Groups to see your default resource group name.
 
 ```
-ibmcloud target -r <resource group>
+ibmcloud target -g <resource group>
 ```
 
 Connect to Cloud Foundry
